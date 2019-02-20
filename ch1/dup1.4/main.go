@@ -1,4 +1,5 @@
-// Exercise 1.4: Modify dup2 to print the names of all files in which each duplicated line occurs.
+// Exercise 1.4: Modify dup2 to print the names of all files in which
+// each duplicated line occurs.
 
 package main
 
@@ -19,7 +20,7 @@ func main() {
 		for _, arg := range files {
 			f, err := os.Open(arg)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "dup2: %v\n", err)
+				fmt.Fprintf(os.Stderr, "dup1.4: %v\n", err)
 				continue
 			}
 			countLines(f, counts, sources)
