@@ -40,7 +40,7 @@ func (a byNumber) Swap(i, j int) {
 }
 
 func (a byNumber) Less(i, j int) bool {
-	return a[i].Number < a[j].Number
+	return a[i].Chapter.Number <= a[j].Chapter.Number && a[i].Number < a[j].Number
 }
 
 func readChapter(dir os.FileInfo) ([]excercise, error) {
