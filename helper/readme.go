@@ -95,7 +95,7 @@ func main() {
 [Excersise {{ .Chapter.Number }}.{{ .Number }}]({{ .Source }}){{ " " }}
 {{- end}}
 {{- $c := 0 -}}
-# The Go
+# The Go Programming Language
 Coding notes on [The Go Programming Language](http://www.gopl.io) book.
 {{- range $k, $v := .}}
 {{- if gt $v.Chapter.Number $c}}
