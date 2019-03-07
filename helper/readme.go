@@ -1,11 +1,12 @@
 package main
 
 import (
-	"fmt"
+	"bufio"
 	"html/template"
 	"io/ioutil"
 	"log"
 	"os"
+	"path"
 	"regexp"
 	"sort"
 	"strconv"
@@ -28,57 +29,57 @@ type byNumber []excercise
 var chRe = regexp.MustCompile(`\d+`)
 var exRe = regexp.MustCompile(`\w+\d+\.(\d+)`)
 
-func (e byNumber) Len() int {
-	return len(e)
+var chIndex []string
+
+func (a byNumber) Len() int {
+	return len(a)
 }
 
-func (e byNumber) Swap(i, j int) {
-	e[i], e[j] = e[j], e[i]
+func (a byNumber) Swap(i, j int) {
+	a[i], a[j] = a[j], a[i]
 }
 
-func (e byNumber) Less(i, j int) bool {
-	return e[i].Number < e[j].Number
+func (a byNumber) Less(i, j int) bool {
+	return a[i].Number < a[j].Number
 }
 
-func readExcersices(dir os.FileInfo) ([]excercise, error) {
+func readChapter(dir os.FileInfo) ([]excercise, error) {
 	chNum, err := strconv.Atoi(chRe.FindString(dir.Name()))
+	excercises := []excercise{}
 
 	if err != nil {
-		return []excercise{}, err
+		return excercises, err
 	}
 
 	ch := chapter{
 		Number: chNum,
+		Title:  chIndex[chNum-1],
 	}
-	fmt.Println(ch)
 
 	exFiles, err := ioutil.ReadDir(dir.Name())
 
 	if err != nil {
-		return []excercise{}, err
+		return excercises, err
 	}
-
-	excercises := []excercise{}
 
 	for _, ef := range exFiles {
 		if ef.IsDir() {
+			// ex, err := readExcercise(ef)
+
 			efName := ef.Name()
 			efNum := exRe.FindStringSubmatch(efName)
 
 			if len(efNum) == 2 {
-				fmt.Printf("%v\n", efNum[1])
-
 				efNumInt, _ := strconv.Atoi(efNum[1])
 
 				ex := excercise{
 					&ch,
 					efNumInt,
-					"",
+					path.Join(dir.Name(), ef.Name()),
 				}
 
 				excercises = append(excercises, ex)
 			}
-
 		}
 	}
 
@@ -87,11 +88,25 @@ func readExcersices(dir os.FileInfo) ([]excercise, error) {
 
 func main() {
 	const readme = `
+{{- define "chapter" -}}
+### Chapter {{ .Chapter.Number }}: {{ .Chapter.Title }}
+{{- end}}
+{{- define "excersise" -}}
+[Excersise {{ .Chapter.Number }}.{{ .Number }}]({{ .Source }}){{ " " }}
+{{- end}}
+{{- $c := 0 -}}
 # The Go
-{{range .}}
-ch {{ .Chapter.Number }} n {{ .Number }}
-{{end}}
+Coding notes on [The Go Programming Language](http://www.gopl.io) book.
+{{- range $k, $v := .}}
+{{- if gt $v.Chapter.Number $c}}
+{{- $c = $v.Chapter.Number}}
+
+{{template "chapter" $v}}
+{{end -}}
+{{- template "excersise" . -}} 
+{{end -}}
 	`
+	// {{if $v.Chapter.Number gt $c}}{{$c = $v.Chapter.Number}}{{end}}
 
 	files, err := ioutil.ReadDir(".")
 
@@ -99,11 +114,23 @@ ch {{ .Chapter.Number }} n {{ .Number }}
 		log.Fatal(err)
 	}
 
+	chpaterTitles, err := os.Open("helper/chapters.txt")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer chpaterTitles.Close()
+
+	scanner := bufio.NewScanner(chpaterTitles)
+	for scanner.Scan() {
+		// fmt.Println(scanner.Text())
+		chIndex = append(chIndex, scanner.Text())
+	}
+
 	excercises := []excercise{}
 
 	for _, f := range files {
 		if f.IsDir() && strings.HasPrefix(f.Name(), "ch") {
-			chExcs, err := readExcersices(f)
+			chExcs, err := readChapter(f)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -115,7 +142,12 @@ ch {{ .Chapter.Number }} n {{ .Number }}
 
 	sort.Sort(byNumber(excercises))
 
-	err = t.Execute(os.Stdout, excercises)
+	// err = t.Execute(os.Stdout, excercises)
+	// if err != nil {
+	// 	log.Println("template:", err)
+	// }
+
+	err = t.ExecuteTemplate(os.Stdout, "readme", excercises)
 	if err != nil {
 		log.Println("template:", err)
 	}
