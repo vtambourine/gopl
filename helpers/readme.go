@@ -13,6 +13,11 @@ import (
 	"strings"
 )
 
+var chRe = regexp.MustCompile(`\d+`)
+var exRe = regexp.MustCompile(`\w+\d+\.(\d+)`)
+
+var chapterTitles []string
+
 type chapter struct {
 	Number int
 	Title  string
@@ -25,11 +30,6 @@ type excercise struct {
 }
 
 type byNumber []excercise
-
-var chRe = regexp.MustCompile(`\d+`)
-var exRe = regexp.MustCompile(`\w+\d+\.(\d+)`)
-
-var chIndex []string
 
 func (a byNumber) Len() int {
 	return len(a)
@@ -53,7 +53,7 @@ func readChapter(dir os.FileInfo) ([]excercise, error) {
 
 	ch := chapter{
 		Number: chNum,
-		Title:  chIndex[chNum-1],
+		Title:  chapterTitles[chNum-1],
 	}
 
 	exFiles, err := ioutil.ReadDir(dir.Name())
@@ -64,8 +64,6 @@ func readChapter(dir os.FileInfo) ([]excercise, error) {
 
 	for _, ef := range exFiles {
 		if ef.IsDir() {
-			// ex, err := readExcercise(ef)
-
 			efName := ef.Name()
 			efNum := exRe.FindStringSubmatch(efName)
 
@@ -106,7 +104,6 @@ Coding notes on [The Go Programming Language](http://www.gopl.io) book.
 {{- template "excersise" . -}} 
 {{end -}}
 	`
-	// {{if $v.Chapter.Number gt $c}}{{$c = $v.Chapter.Number}}{{end}}
 
 	files, err := ioutil.ReadDir(".")
 
@@ -114,7 +111,7 @@ Coding notes on [The Go Programming Language](http://www.gopl.io) book.
 		log.Fatal(err)
 	}
 
-	chpaterTitles, err := os.Open("helper/chapters.txt")
+	chpaterTitles, err := os.Open("helpers/chapters.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -122,8 +119,7 @@ Coding notes on [The Go Programming Language](http://www.gopl.io) book.
 
 	scanner := bufio.NewScanner(chpaterTitles)
 	for scanner.Scan() {
-		// fmt.Println(scanner.Text())
-		chIndex = append(chIndex, scanner.Text())
+		chapterTitles = append(chapterTitles, scanner.Text())
 	}
 
 	excercises := []excercise{}
@@ -142,13 +138,8 @@ Coding notes on [The Go Programming Language](http://www.gopl.io) book.
 
 	sort.Sort(byNumber(excercises))
 
-	// err = t.Execute(os.Stdout, excercises)
-	// if err != nil {
-	// 	log.Println("template:", err)
-	// }
-
 	err = t.ExecuteTemplate(os.Stdout, "readme", excercises)
 	if err != nil {
-		log.Println("template:", err)
+		log.Fatal(err)
 	}
 }
