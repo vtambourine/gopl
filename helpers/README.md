@@ -3,5 +3,5 @@
 ## readme
 Generate README file with links to exercise solutions.
 ```bash
-❯ ./bin/readme
+❯ ./bin/readme > README.md
 ```
