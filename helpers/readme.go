@@ -103,6 +103,10 @@ Coding notes on [The Go Programming Language](http://www.gopl.io) book.
 {{end -}}
 {{- template "excersise" . -}} 
 {{end -}}
+
+## References
+* [adonovan/gopl.io](https://github.com/adonovan/gopl.io/)
+* [torbiak/gopl](https://github.com/torbiak/gopl) Solutions to K&D's The Go Programming Language exercises
 	`
 
 	files, err := ioutil.ReadDir(".")
