@@ -23,13 +23,13 @@ type chapter struct {
 	Title  string
 }
 
-type excercise struct {
+type exercise struct {
 	Chapter *chapter
 	Number  int
 	Source  string
 }
 
-type byNumber []excercise
+type byNumber []exercise
 
 func (a byNumber) Len() int {
 	return len(a)
@@ -40,15 +40,16 @@ func (a byNumber) Swap(i, j int) {
 }
 
 func (a byNumber) Less(i, j int) bool {
-	return a[i].Chapter.Number <= a[j].Chapter.Number && a[i].Number < a[j].Number
+	return a[i].Chapter.Number < a[j].Chapter.Number ||
+		a[i].Chapter.Number == a[j].Chapter.Number && a[i].Number < a[j].Number
 }
 
-func readChapter(dir os.FileInfo) ([]excercise, error) {
+func readChapter(dir os.FileInfo) ([]exercise, error) {
 	chNum, err := strconv.Atoi(chRe.FindString(dir.Name()))
-	excercises := []excercise{}
+	exercises := []exercise{}
 
 	if err != nil {
-		return excercises, err
+		return exercises, err
 	}
 
 	ch := chapter{
@@ -59,7 +60,7 @@ func readChapter(dir os.FileInfo) ([]excercise, error) {
 	exFiles, err := ioutil.ReadDir(dir.Name())
 
 	if err != nil {
-		return excercises, err
+		return exercises, err
 	}
 
 	for _, ef := range exFiles {
@@ -70,18 +71,18 @@ func readChapter(dir os.FileInfo) ([]excercise, error) {
 			if len(efNum) == 2 {
 				efNumInt, _ := strconv.Atoi(efNum[1])
 
-				ex := excercise{
+				ex := exercise{
 					&ch,
 					efNumInt,
 					path.Join(dir.Name(), ef.Name()),
 				}
 
-				excercises = append(excercises, ex)
+				exercises = append(exercises, ex)
 			}
 		}
 	}
 
-	return excercises, nil
+	return exercises, nil
 }
 
 func main() {
@@ -89,25 +90,28 @@ func main() {
 {{- define "chapter" -}}
 ### Chapter {{ .Chapter.Number }}: {{ .Chapter.Title }}
 {{- end}}
-{{- define "excersise" -}}
-[Excersise {{ .Chapter.Number }}.{{ .Number }}]({{ .Source }}){{ " " }}
-{{- end}}
-{{- $c := 0 -}}
+
+{{- define "exercise" -}}
+{{ " " }}[{{ .Chapter.Number }}.{{ .Number }}]({{ .Source }})
+{{- end -}}
+
 # The Go Programming Language
 Coding notes on [The Go Programming Language](http://www.gopl.io) book.
+
+{{- $c := 0}}
 {{- range $k, $v := .}}
 {{- if gt $v.Chapter.Number $c}}
-{{- $c = $v.Chapter.Number}}
-
+{{$c = $v.Chapter.Number}}
 {{template "chapter" $v}}
-{{end -}}
-{{- template "excersise" . -}} 
-{{end -}}
+Exercises
+{{- end -}}
+{{template "exercise" . -}}
+{{end}}
 
 ## References
 * [adonovan/gopl.io](https://github.com/adonovan/gopl.io/)
 * [torbiak/gopl](https://github.com/torbiak/gopl) Solutions to K&D's The Go Programming Language exercises
-	`
+`
 
 	files, err := ioutil.ReadDir(".")
 
@@ -126,7 +130,7 @@ Coding notes on [The Go Programming Language](http://www.gopl.io) book.
 		chapterTitles = append(chapterTitles, scanner.Text())
 	}
 
-	excercises := []excercise{}
+	exercises := []exercise{}
 
 	for _, f := range files {
 		if f.IsDir() && strings.HasPrefix(f.Name(), "ch") {
@@ -134,15 +138,15 @@ Coding notes on [The Go Programming Language](http://www.gopl.io) book.
 			if err != nil {
 				log.Fatal(err)
 			}
-			excercises = append(excercises, chExcs...)
+			exercises = append(exercises, chExcs...)
 		}
 	}
 
 	t := template.Must(template.New("readme").Parse(readme))
 
-	sort.Sort(byNumber(excercises))
+	sort.Sort(byNumber(exercises))
 
-	err = t.ExecuteTemplate(os.Stdout, "readme", excercises)
+	err = t.ExecuteTemplate(os.Stdout, "readme", exercises)
 	if err != nil {
 		log.Fatal(err)
 	}
