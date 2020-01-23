@@ -26,6 +26,7 @@ func main() {
 		"moguls": moguls,
 		"saddle": saddle,
 	}
+
 	for n, s := range surfaces {
 		file, err := os.Create(fmt.Sprintf("%s.svg", n))
 		if err != nil {
@@ -85,5 +86,5 @@ func moguls(x, y float64) float64 {
 }
 
 func saddle(x, y float64) float64 {
-	return y*y/225.0 - x*x/50.0
+	return y*y/(25*25) - x*x/(17*17)
 }
